@@ -76,6 +76,10 @@ export default function Home() {
 
   const categories = data?.categories || [];
   const setting = data?.setting || {};
+  
+  // ลิงก์เพลงเริ่มต้น (ถ้าใน Admin ไม่ได้ใส่ไว้)
+  const defaultMusicUrl = "https://files.catbox.moe/9vzv2r.mp3"; // Dusk Till Dawn (Zayn ft. Sia)
+  const musicUrl = setting.musicUrl || defaultMusicUrl;
 
   // Default active category
   if (!activeCategoryId && categories.length > 0) {
@@ -103,9 +107,9 @@ export default function Home() {
       )}
       <div className={styles.overlay} />
 
-      {setting.musicUrl && (
+      {musicUrl && (
         <>
-          <audio ref={audioRef} src={setting.musicUrl} loop />
+          <audio ref={audioRef} src={musicUrl} loop />
           <div className={styles.musicContainer}>
             {isPlaying && (
               <div className={styles.nowPlaying}>
