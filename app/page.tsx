@@ -42,13 +42,23 @@ export default function Home() {
 
   const enterSite = () => {
     setShowLanding(false);
-    // Play music immediately on enter
+    document.body.style.overflow = 'auto'; // ปลดล็อคการเลื่อนหน้าจอ
     if (audioRef.current) {
       audioRef.current.play().then(() => {
         setIsPlaying(true);
       }).catch(err => console.error("Autoplay failed:", err));
     }
   };
+
+  // ล็อคการเลื่อนหน้าจอตอนอยู่หน้า Landing
+  useEffect(() => {
+    if (showLanding) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => { document.body.style.overflow = 'auto'; };
+  }, [showLanding]);
 
   // Default active category
   useEffect(() => {
