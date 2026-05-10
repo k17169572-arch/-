@@ -14,6 +14,35 @@ import styles from './page.module.css';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
+interface Member {
+  id: string;
+  name: string;
+  image?: string;
+  facebookLink?: string;
+  pageLink?: string;
+}
+
+interface Position {
+  id: string;
+  name: string;
+  iconType: string;
+  members: Member[];
+}
+
+interface Category {
+  id: string;
+  name: string;
+  positions: Position[];
+}
+
+interface Setting {
+  backgroundUrl?: string;
+  musicUrl?: string;
+  landingBackgroundUrl?: string;
+  landingTitle?: string;
+  landingSubtitle?: string;
+}
+
 export default function Home() {
   const router = useRouter();
   const { data, error, isLoading } = useSWR('/api/public/data', fetcher, {
@@ -69,21 +98,21 @@ export default function Home() {
 
   if (error) return <div style={{ color: 'white', textAlign: 'center', marginTop: '50px' }}>Failed to load directory.</div>;
 
-  const categories = data?.categories || [];
-  const setting = data?.setting || {};
+  const categories: Category[] = data?.categories || [];
+  const setting: Setting = data?.setting || {};
   
   const defaultMusicUrl = "https://files.catbox.moe/9vzv2r.mp3";
   const musicUrl = setting.musicUrl || defaultMusicUrl;
 
-  const activeCategory = categories.find((c: any) => c.id === activeCategoryId);
+  const activeCategory = categories.find((c) => c.id === activeCategoryId);
   const positions = activeCategory?.positions || [];
 
-  const filteredPositions = positions.map((pos: any) => ({
+  const filteredPositions = positions.map((pos) => ({
     ...pos,
-    members: pos.members.filter((m: any) => 
+    members: pos.members.filter((m) => 
       m.name.toLowerCase().includes(search.toLowerCase())
     )
-  })).filter((pos: any) => pos.members.length > 0);
+  })).filter((pos) => pos.members.length > 0);
 
   return (
     <div className={styles.pageWrapper}>
