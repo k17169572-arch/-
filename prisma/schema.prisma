@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  name      String     // e.g. "Head", "Member Layout Lady"
+  order     Int        @default(0)
+  positions Position[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Position {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String   // e.g. "OWNER", "LEADER"
+  order      Int      @default(0)
+  iconType   String   @default("crown")
+  categoryId String   @db.ObjectId
+  category   Category @relation(fields: [categoryId], references: [id])
+  members    Member[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Member {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  positionId   String   @db.ObjectId
+  position     Position @relation(fields: [positionId], references: [id])
+  image        String?
+  facebookLink String?
+  pageLink     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Setting {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  backgroundUrl     String?
+  musicUrl          String?
+  adminPasswordHash String
+  updatedAt         DateTime @updatedAt
+}
