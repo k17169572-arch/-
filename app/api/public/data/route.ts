@@ -21,7 +21,13 @@ export async function GET() {
 
     return NextResponse.json({
       categories,
-      setting: setting ? { backgroundUrl: setting.backgroundUrl, musicUrl: setting.musicUrl } : null,
+      setting: setting ? { 
+        backgroundUrl: setting.backgroundUrl, 
+        musicUrl: setting.musicUrl,
+        landingBackgroundUrl: setting.landingBackgroundUrl,
+        landingTitle: setting.landingTitle,
+        landingSubtitle: setting.landingSubtitle
+      } : null,
     });
   } catch (error) {
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });

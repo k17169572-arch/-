@@ -8,15 +8,28 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   if (!(await isAuthenticated())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const setting = await prisma.setting.findFirst();
-  return NextResponse.json({ backgroundUrl: setting?.backgroundUrl || '', musicUrl: setting?.musicUrl || '' });
+  return NextResponse.json({ 
+    backgroundUrl: setting?.backgroundUrl || '', 
+    musicUrl: setting?.musicUrl || '',
+    landingBackgroundUrl: setting?.landingBackgroundUrl || '',
+    landingTitle: setting?.landingTitle || 'Layout Lady',
+    landingSubtitle: setting?.landingSubtitle || 'Member of The Layout Lady'
+  });
 }
 
 export async function PUT(request: Request) {
   if (!(await isAuthenticated())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const { backgroundUrl, password } = await request.json();
+  const body = await request.json();
+  const { backgroundUrl, musicUrl, landingBackgroundUrl, landingTitle, landingSubtitle, password } = body;
   
   let setting = await prisma.setting.findFirst();
-  const data: any = { backgroundUrl };
+  const data: any = { 
+    backgroundUrl, 
+    musicUrl,
+    landingBackgroundUrl,
+    landingTitle,
+    landingSubtitle
+  };
   
   if (password) {
     data.adminPasswordHash = await bcrypt.hash(password, 10);
@@ -34,5 +47,5 @@ export async function PUT(request: Request) {
     });
   }
 
-  return NextResponse.json({ backgroundUrl: setting.backgroundUrl });
+  return NextResponse.json(setting);
 }

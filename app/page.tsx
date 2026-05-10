@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import useSWR from 'swr';
-import { Search, Crown, Shield, Link as LinkIcon, User, Lock, Volume2, VolumeX } from 'lucide-react';
+import { Search, Crown, Shield, Link as LinkIcon, User, Lock, Volume2, VolumeX, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const FacebookIcon = () => (
@@ -22,33 +22,52 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showLanding, setShowLanding] = useState(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const toggleMusic = () => {
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
+        setIsPlaying(false);
       } else {
-        audioRef.current.play();
+        audioRef.current.play().then(() => {
+          setIsPlaying(true);
+        }).catch(err => {
+          console.error("Playback failed:", err);
+        });
       }
-      setIsPlaying(!isPlaying);
     }
   };
+
+  const enterSite = () => {
+    setShowLanding(false);
+    // Play music immediately on enter
+    if (audioRef.current) {
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch(err => console.error("Autoplay failed:", err));
+    }
+  };
+
+  // Default active category
+  useEffect(() => {
+    if (!activeCategoryId && data?.categories?.length > 0) {
+      setActiveCategoryId(data.categories[0].id);
+    }
+  }, [data, activeCategoryId]);
 
   if (error) return <div style={{ color: 'white', textAlign: 'center', marginTop: '50px' }}>Failed to load directory.</div>;
 
   const categories = data?.categories || [];
   const setting = data?.setting || {};
-
-  // Default active category
-  if (!activeCategoryId && categories.length > 0) {
-    setActiveCategoryId(categories[0].id);
-  }
+  
+  const defaultMusicUrl = "https://files.catbox.moe/9vzv2r.mp3";
+  const musicUrl = setting.musicUrl || defaultMusicUrl;
 
   const activeCategory = categories.find((c: any) => c.id === activeCategoryId);
   const positions = activeCategory?.positions || [];
 
-  // Filter members by search query
   const filteredPositions = positions.map((pos: any) => ({
     ...pos,
     members: pos.members.filter((m: any) => 
@@ -58,18 +77,42 @@ export default function Home() {
 
   return (
     <div className={styles.pageWrapper}>
-      {setting.backgroundUrl && (
-        <div 
-          className={styles.background} 
-          style={{ backgroundImage: `url(${setting.backgroundUrl})` }}
-        />
-      )}
+      {/* Background for Directory */}
+      <div 
+        className={styles.background} 
+        style={{ backgroundImage: `url(${setting.backgroundUrl || ''})` }}
+      />
       <div className={styles.overlay} />
 
-      {setting.musicUrl && (
+      {/* Landing Page Layer */}
+      {showLanding && (
+        <div className={styles.landingLayer}>
+          <div 
+            className={styles.landingBg} 
+            style={{ backgroundImage: `url(${setting.landingBackgroundUrl || setting.backgroundUrl || ''})` }}
+          />
+          <div className={styles.landingOverlay} />
+          
+          <div className={styles.landingContent}>
+            <div className={styles.landingTitleContainer}>
+              <div className={styles.landingSubtitle}>{setting.landingSubtitle || 'Member of The Layout Lady'}</div>
+              <h1 className={styles.landingTitle}>{setting.landingTitle || 'Layout Lady'}</h1>
+              <div className={styles.titleUnderline} />
+            </div>
+            
+            <button className={styles.enterBtn} onClick={enterSite}>
+              <span>Enter Site</span>
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Background Music */}
+      {musicUrl && (
         <>
-          <audio ref={audioRef} src={setting.musicUrl} loop />
-          <div className={styles.musicContainer}>
+          <audio ref={audioRef} src={musicUrl} loop />
+          <div className={styles.musicContainer} style={{ opacity: showLanding ? 0 : 1, pointerEvents: showLanding ? 'none' : 'auto' }}>
             {isPlaying && (
               <div className={styles.nowPlaying}>
                 <div className={styles.bar} />
@@ -84,6 +127,7 @@ export default function Home() {
         </>
       )}
 
+      {/* Admin Lock */}
       <div 
         className={styles.adminLock} 
         onClick={() => router.push('/admin/login')}
@@ -92,123 +136,115 @@ export default function Home() {
         <Lock size={20} />
       </div>
 
-      <div className={`${styles.header} animate-fade-in`}>
-        <h1 className={styles.title}>Layout Lady</h1>
-        <div className={styles.subtitle}>Member of The Layout Lady</div>
-      </div>
-
-      <div className={`container animate-fade-in`}>
-        {categories.length > 0 && (
-          <div className={styles.categoryTabs}>
-            {categories.map((cat: any) => (
-              <button 
-                key={cat.id}
-                className={`${styles.categoryTab} ${activeCategoryId === cat.id ? styles.categoryTabActive : ''}`}
-                onClick={() => setActiveCategoryId(cat.id)}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className={styles.searchContainer}>
-          <Search className={styles.searchIcon} size={20} />
-          <input 
-            type="text" 
-            placeholder="ค้นหารายชื่อสมาชิก..." 
-            className={styles.searchInput}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      {/* Main Directory UI */}
+      <div className={`${styles.mainContent} ${!showLanding ? styles.showContent : ''}`}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Layout Lady</h1>
+          <div className={styles.subtitle}>Member of The Layout Lady</div>
         </div>
 
-        {isLoading ? (
-          <div style={{ textAlign: 'center', color: '#888' }}>กำลังโหลดรายชื่อ...</div>
-        ) : (
-          filteredPositions.map((position: any) => {
-            const posName = position.name.toLowerCase();
-            const isGold = position.iconType === 'crown' || posName === 'owner';
-            const isBlue = position.iconType.includes('blue') || posName.includes('member');
-            
-            // Custom Colors requested by user
-            let accentColor = 'var(--accent-red)'; // Default
-            if (isGold) accentColor = 'var(--accent-gold)';
-            else if (isBlue) accentColor = '#4488ff';
-            else if (posName.includes('leader')) accentColor = '#ff4444'; // Red for Leader
-            else if (posName.includes('staff')) accentColor = '#44ff44';  // Green for Staff
+        <div className={`container`}>
+          {categories.length > 0 && (
+            <div className={styles.categoryTabs}>
+              {categories.map((cat: any) => (
+                <button 
+                  key={cat.id}
+                  className={`${styles.categoryTab} ${activeCategoryId === cat.id ? styles.categoryTabActive : ''}`}
+                  onClick={() => setActiveCategoryId(cat.id)}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          )}
 
-            const Icon = position.iconType.includes('crown') ? Crown : 
-                         (position.iconType.includes('shield') ? Shield : User);
+          <div className={styles.searchContainer}>
+            <Search className={styles.searchIcon} size={20} />
+            <input 
+              type="text" 
+              placeholder="ค้นหารายชื่อสมาชิก..." 
+              className={styles.searchInput}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-            // Determine line and role class based on color
-            const lineClass = isGold ? styles.goldLine : 
-                             (posName.includes('staff') ? styles.greenLine : 
-                             (posName.includes('leader') ? styles.redLine : 
-                             (isBlue ? styles.blueLine : styles.redLine)));
-            
-            const roleClass = isGold ? styles.goldRole : 
-                             (posName.includes('staff') ? styles.greenRole : 
-                             (posName.includes('leader') ? styles.redRole : 
-                             (isBlue ? styles.blueRole : styles.redRole)));
+          {isLoading ? (
+            <div style={{ textAlign: 'center', color: '#888' }}>กำลังโหลดรายชื่อ...</div>
+          ) : (
+            filteredPositions.map((position: any) => {
+              const posName = position.name.toLowerCase();
+              const isGold = position.iconType === 'crown' || posName === 'owner';
+              const isBlue = position.iconType.includes('blue') || posName.includes('member');
+              
+              let accentColor = 'var(--accent-red)'; 
+              if (isGold) accentColor = 'var(--accent-gold)';
+              else if (isBlue) accentColor = '#4488ff';
+              else if (posName.includes('leader')) accentColor = '#ff4444'; 
+              else if (posName.includes('staff')) accentColor = '#44ff44';  
 
-            return (
-              <div key={position.id} className={styles.positionSection}>
-                <div className={styles.positionHeader}>
-                  <Icon color={accentColor} size={24} style={{ filter: `drop-shadow(0 0 8px ${accentColor})` }} />
-                  <h2 className={styles.positionTitle} style={{ color: accentColor, textShadow: `0 0 10px ${accentColor}` }}>
-                    {position.name}
-                  </h2>
-                  <div className={`${styles.positionLine} ${lineClass}`} />
-                </div>
+              const Icon = position.iconType.includes('crown') ? Crown : 
+                           (position.iconType.includes('shield') ? Shield : User);
 
-                <div className={styles.grid}>
-                  {position.members.map((member: any) => (
-                    <div key={member.id} className={`${styles.card} glass-panel`}>
-                      <div className={styles.cardHeader}>
-                        {member.image ? (
-                          <img src={member.image} alt={member.name} className={styles.avatar} />
-                        ) : (
-                          <div className={styles.avatar} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <User color="#888" />
+              const lineClass = isGold ? styles.goldLine : 
+                               (posName.includes('staff') ? styles.greenLine : 
+                               (posName.includes('leader') ? styles.redLine : 
+                               (isBlue ? styles.blueLine : styles.redLine)));
+              
+              const roleClass = isGold ? styles.goldRole : 
+                               (posName.includes('staff') ? styles.greenRole : 
+                               (posName.includes('leader') ? styles.redRole : 
+                               (isBlue ? styles.blueRole : styles.redRole)));
+
+              return (
+                <div key={position.id} className={styles.positionSection}>
+                  <div className={styles.positionHeader}>
+                    <Icon color={accentColor} size={24} style={{ filter: `drop-shadow(0 0 8px ${accentColor})` }} />
+                    <h2 className={styles.positionTitle} style={{ color: accentColor, textShadow: `0 0 10px ${accentColor}` }}>
+                      {position.name}
+                    </h2>
+                    <div className={`${styles.positionLine} ${lineClass}`} />
+                  </div>
+
+                  <div className={styles.grid}>
+                    {position.members.map((member: any) => (
+                      <div key={member.id} className={`${styles.card} glass-panel`}>
+                        <div className={styles.cardHeader}>
+                          {member.image ? (
+                            <img src={member.image} alt={member.name} className={styles.avatar} />
+                          ) : (
+                            <div className={styles.avatar} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <User color="#888" />
+                            </div>
+                          )}
+                          <div className={styles.memberInfo}>
+                            <span className={`${styles.memberRole} ${roleClass}`}>
+                              + {position.name}
+                            </span>
+                            <span className={styles.memberName}>{member.name}</span>
                           </div>
-                        )}
-                        <div className={styles.memberInfo}>
-                          <span className={`${styles.memberRole} ${roleClass}`}>
-                            + {position.name}
-                          </span>
-                          <span className={styles.memberName}>{member.name}</span>
+                        </div>
+                        
+                        <div className={styles.cardActions}>
+                          {member.facebookLink && (
+                            <a href={member.facebookLink} target="_blank" rel="noopener noreferrer" className={styles.btn}>
+                              <FacebookIcon /> Facebook
+                            </a>
+                          )}
+                          {member.pageLink && (
+                            <a href={member.pageLink} target="_blank" rel="noopener noreferrer" className={styles.btn}>
+                              <LinkIcon size={16} /> Page
+                            </a>
+                          )}
                         </div>
                       </div>
-                      
-                      <div className={styles.cardActions}>
-                        {member.facebookLink && (
-                          <a href={member.facebookLink} target="_blank" rel="noopener noreferrer" className={styles.btn}>
-                            <FacebookIcon /> Facebook
-                          </a>
-                        )}
-                        {member.pageLink && (
-                          <a href={member.pageLink} target="_blank" rel="noopener noreferrer" className={styles.btn}>
-                            <LinkIcon size={16} /> Page
-                          </a>
-                        )}
-                        {(!member.facebookLink && !member.pageLink) && (
-                          <div style={{ height: '38px' }} />
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            );
-          })
-        )}
-        
-        {!isLoading && filteredPositions.length === 0 && (
-          <div style={{ textAlign: 'center', color: '#888', padding: '40px 0' }}>
-            ไม่พบรายชื่อในหมวดหมู่นี้
-          </div>
-        )}
+              );
+            })
+          )}
+        </div>
       </div>
     </div>
   );

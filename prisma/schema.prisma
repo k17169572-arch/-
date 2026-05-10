@@ -44,6 +44,9 @@ model Setting {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
   backgroundUrl     String?
   musicUrl          String?
+  landingBackgroundUrl String?
+  landingTitle      String?  @default("Layout Lady")
+  landingSubtitle   String?  @default("Member of The Layout Lady")
   adminPasswordHash String
   updatedAt         DateTime @updatedAt
 }

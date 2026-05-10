@@ -360,6 +360,9 @@ function MembersManager({ members, positions, categories, mutate }: any) {
 function SettingsManager({ setting, mutate }: any) {
   const [backgroundUrl, setBackgroundUrl] = useState(setting.backgroundUrl || '');
   const [musicUrl, setMusicUrl] = useState(setting.musicUrl || '');
+  const [landingBackgroundUrl, setLandingBackgroundUrl] = useState(setting.landingBackgroundUrl || '');
+  const [landingTitle, setLandingTitle] = useState(setting.landingTitle || 'Layout Lady');
+  const [landingSubtitle, setLandingSubtitle] = useState(setting.landingSubtitle || 'Member of The Layout Lady');
   const [password, setPassword] = useState('');
 
   const handleSave = async (e: React.FormEvent) => {
@@ -367,8 +370,16 @@ function SettingsManager({ setting, mutate }: any) {
     await fetch('/api/admin/settings', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ backgroundUrl, musicUrl, password: password || undefined }),
+      body: JSON.stringify({ 
+        backgroundUrl, 
+        musicUrl, 
+        landingBackgroundUrl,
+        landingTitle,
+        landingSubtitle,
+        password: password || undefined 
+      }),
     });
+
     setPassword('');
     alert('บันทึกสำเร็จ');
     mutate();
@@ -406,6 +417,37 @@ function SettingsManager({ setting, mutate }: any) {
             style={{ ...inputStyle, width: '100%' }} 
           />
         </div>
+
+        <h4 style={{ color: '#d4af37', borderTop: '1px solid #333', paddingTop: '20px', marginTop: '20px' }}>ตั้งค่าหน้าแรก (Landing Page)</h4>
+        
+        <div>
+          <label style={{ display: 'block', marginBottom: '8px', color: '#aaa' }}>URL รูปพื้นหลังหน้าแรก (Landing Background)</label>
+          <input 
+            value={landingBackgroundUrl} 
+            onChange={e => setLandingBackgroundUrl(e.target.value)} 
+            placeholder="https://..." 
+            style={{ ...inputStyle, width: '100%' }} 
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '8px', color: '#aaa' }}>หัวข้อหน้าแรก (Landing Title)</label>
+          <input 
+            value={landingTitle} 
+            onChange={e => setLandingTitle(e.target.value)} 
+            placeholder="เช่น STYLEDARA" 
+            style={{ ...inputStyle, width: '100%' }} 
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '8px', color: '#aaa' }}>คำบรรยายหน้าแรก (Landing Subtitle)</label>
+          <input 
+            value={landingSubtitle} 
+            onChange={e => setLandingSubtitle(e.target.value)} 
+            placeholder="เช่น STANDING IN THE WORLD" 
+            style={{ ...inputStyle, width: '100%' }} 
+          />
+        </div>
+
         <button type="submit" style={{ ...btnStyle, width: 'fit-content', padding: '12px 25px' }}>บันทึกการตั้งค่า</button>
       </form>
     </div>
