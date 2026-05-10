@@ -42,7 +42,7 @@ export default function Home() {
   // Autoplay attempt on first user interaction
   useEffect(() => {
     const handleFirstInteraction = () => {
-      if (audioRef.current && !isPlaying && setting?.musicUrl) {
+      if (audioRef.current && !isPlaying) {
         audioRef.current.play()
           .then(() => {
             setIsPlaying(true);
@@ -50,7 +50,7 @@ export default function Home() {
             window.removeEventListener('touchstart', handleFirstInteraction);
           })
           .catch(() => {
-            // Still blocked or failed, keep listener
+            // Still blocked or failed
           });
       }
     };
@@ -62,23 +62,15 @@ export default function Home() {
       window.removeEventListener('click', handleFirstInteraction);
       window.removeEventListener('touchstart', handleFirstInteraction);
     };
-  }, [setting?.musicUrl, isPlaying]);
-
-  // Update audio source when setting changes
-  useEffect(() => {
-    if (audioRef.current && setting?.musicUrl) {
-      audioRef.current.load();
-      // Don't auto-set isPlaying to true here, wait for interaction or toggle
-    }
-  }, [setting?.musicUrl]);
+  }, [isPlaying]);
 
   if (error) return <div style={{ color: 'white', textAlign: 'center', marginTop: '50px' }}>Failed to load directory.</div>;
 
   const categories = data?.categories || [];
   const setting = data?.setting || {};
   
-  // ลิงก์เพลงเริ่มต้น (ถ้าใน Admin ไม่ได้ใส่ไว้)
-  const defaultMusicUrl = "https://files.catbox.moe/9vzv2r.mp3"; // Dusk Till Dawn (Zayn ft. Sia)
+  // ลิงก์เพลงเริ่มต้น (Dusk Till Dawn)
+  const defaultMusicUrl = "https://files.catbox.moe/9vzv2r.mp3";
   const musicUrl = setting.musicUrl || defaultMusicUrl;
 
   // Default active category
@@ -172,17 +164,15 @@ export default function Home() {
             const isGold = position.iconType === 'crown' || posName === 'owner';
             const isBlue = position.iconType.includes('blue') || posName.includes('member');
             
-            // Custom Colors requested by user
-            let accentColor = 'var(--accent-red)'; // Default
+            let accentColor = 'var(--accent-red)'; 
             if (isGold) accentColor = 'var(--accent-gold)';
             else if (isBlue) accentColor = '#4488ff';
-            else if (posName.includes('leader')) accentColor = '#ff4444'; // Red for Leader
-            else if (posName.includes('staff')) accentColor = '#44ff44';  // Green for Staff
+            else if (posName.includes('leader')) accentColor = '#ff4444'; 
+            else if (posName.includes('staff')) accentColor = '#44ff44';  
 
             const Icon = position.iconType.includes('crown') ? Crown : 
                          (position.iconType.includes('shield') ? Shield : User);
 
-            // Determine line and role class based on color
             const lineClass = isGold ? styles.goldLine : 
                              (posName.includes('staff') ? styles.greenLine : 
                              (posName.includes('leader') ? styles.redLine : 
